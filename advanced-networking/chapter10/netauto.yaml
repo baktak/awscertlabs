@@ -1,0 +1,31 @@
+# This is a CloudFormation template for Advanced Networking chapter 10 exercises
+# 10.1 Create a basic VPC with a minimal script and no parameters
+# 10.2 Modifying the original to include a subnet
+
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  myVPC:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: false
+      EnableDnsHostnames: false
+      InstanceTenancy: dedicated
+      Tags:
+      - Key: Name
+        Value: "VPC for Advanced Networking Exercise Chapter 10.1"
+      - Key: Description
+        Value: "Basic VPC without any subnets."
+
+  subnetPublic1a:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: us-east-1a
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+      Tags: 
+      - Key: Name
+        Value: advanced-networking-chapter10-public-1a
+      - Key: Description
+        Value: "my public subnet"
+      VpcId: !Ref myVPC
