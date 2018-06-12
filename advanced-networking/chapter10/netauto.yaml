@@ -1,13 +1,28 @@
 # This is a CloudFormation template for Advanced Networking chapter 10 exercises
 # 10.1 Create a basic VPC with a minimal script and no parameters
 # 10.2 Modifying the original to include a subnet
+# 10.3 Add parameters for the VPC and Subnet CIDR blocks
 
 AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters: 
+  VpcCidr: 
+    Type: String
+    Default: 10.0.0.0/16  
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+
+  Subnet1aCidr:
+    Type: String
+    Default: 10.0.0.0/24  
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+
 Resources:
   myVPC:
     Type: AWS::EC2::VPC
     Properties: 
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: !Ref VpcCidr
       EnableDnsSupport: false
       EnableDnsHostnames: false
       InstanceTenancy: dedicated
@@ -21,7 +36,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties: 
       AvailabilityZone: us-east-1a
-      CidrBlock: 10.0.0.0/24
+      CidrBlock: !Ref Subnet1aCidr
       MapPublicIpOnLaunch: true
       Tags: 
       - Key: Name
