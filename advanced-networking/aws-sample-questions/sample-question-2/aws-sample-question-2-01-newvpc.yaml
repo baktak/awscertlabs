@@ -105,6 +105,18 @@ Resources:
           Value: Private
       VpcId: !Ref Vpc
 
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'InternetGateway / ', !Ref 'AWS::StackName' ] ]
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref Vpc
+
   Vpc:
     Type: AWS::EC2::VPC
     Properties:
@@ -113,7 +125,7 @@ Resources:
       EnableDnsSupport: true
       Tags:
         - Key: Name
-          Value: !Join [ '', [ 'Vpc /', !Ref 'AWS::StackName' ] ]
+          Value: !Join [ '', [ 'Vpc / ', !Ref 'AWS::StackName' ] ]
 
 
 Outputs:
