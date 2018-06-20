@@ -37,10 +37,13 @@ Metadata:
       - BastionAccessCidr
       - BastionAccessCidrDescription
       - Vpc
+      - VpcCidr
         
     ParameterLabels:
       Vpc:
         default: Vpc Id
+      VpcCidr:
+        default: Cidr block for the Vpc
       BastionAccessCidr:
         default: Allow SSH Access From
       BastionAccessCidrDescription:
@@ -63,13 +66,17 @@ Parameters:
     Description: 'Vpc Id for an existing VPC'
     Type: AWS::EC2::VPC::Id
 
+  VpcCidr:
+    Type: String
+    Description: CIDR block for the VPC - used to allow egress ssh from the bastion to other hosts in the vpc. Should be inherited from the master template
+    Default: 10.0.0.0/16
+
   
 Resources:
 
   BastionHostSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join [ '', [ !Ref 'AWS::StackName', '-bastion-securitygroup' ] ]
       GroupDescription: 'Security group for the bastion host'
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -77,14 +84,42 @@ Resources:
           FromPort: 22
           ToPort: 22
           Description: !Ref BastionAccessCidrDescription
-      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          CidrIp: !Ref VpcCidr
+          FromPort: 22
+          ToPort: 22
+          Description: "Define explicit egress for ssh to hosts in the current VPC"
       Tags: 
         - Key: Name
           Value: !Join [ '', [ 'Bastion Security Group / ', !Ref 'AWS::StackName' ] ] 
+      VpcId: !Ref Vpc
+
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: 'Security group for the application servers'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref BastionHostSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 127.0.0.1/32
+          Description: "Removed default egress rule for the security group"
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'App Server Security Group / ', !Ref 'AWS::StackName' ] ]
+      VpcId: !Ref Vpc
+       
 
 Outputs:
     
   BastionHostSecurityGroup: 
     Value: !Ref BastionHostSecurityGroup
+
+  AppSecurityGroup:
+    Value: !Ref AppSecurityGroup
 
 
