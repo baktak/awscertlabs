@@ -119,12 +119,12 @@ Resources:
       GroupDescription: 'Security group to support access to AWS yum repositories'
       SecurityGroupEgress:
         - IpProtocol: tcp
-          CidrIp: "52.92.16.0/20"
+          CidrIp: "52.216.0.0/15"
           FromPort: 80
           ToPort: 80
           Description: "AWS S3 us-east-1"
         - IpProtocol: tcp
-          CidrIp: "52.92.48.0/22"
+          CidrIp: "52.218.128.0/17"
           FromPort: 80
           ToPort: 80
           Description: "AWS S3 us-west-1"

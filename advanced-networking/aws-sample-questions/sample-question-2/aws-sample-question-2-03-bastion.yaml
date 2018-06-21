@@ -1,0 +1,143 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Architecture to experiment with AWS Advanced Networking Certification Sample Question 2
+
+Metadata: 
+
+  Author:
+    Description: Tom Kringstad (tkringstad@baktak.com)
+  License:
+    Use as you wish. No warranty offered - this is just being used to experiment with AWS. 
+
+  Question: 
+    Description: 
+      Your application server instances reside in the private subnet of your VPC. These instances need to
+      access a Git repository on the Internet. You create a NAT gateway in the public subnet of your VPC. The
+      NAT gateway can reach the Git repository, but instances in the private subnet cannot. You confirm that a
+      default route in the private subnet route table points to the NAT gateway. The security group for your
+      application server instances permits all traffic to the NAT gateway.
+      What configuration change should you make to ensure that these instances can reach the patch server?
+
+  Answers:
+    Description: 
+       A) Assign public IP addresses to the instances and route 0.0.0.0/0 to the Internet gateway.
+       B) Configure an outbound rule on the application server instance security group for the Git repository.
+       C) Configure inbound network access control lists (network ACLs) to allow traffic from the Git repository to
+          the public subnet.
+       D) Configure an inbound rule on the application server instance security group for the Git repository.
+
+
+  AWS::CloudFormation::Interface:
+
+    ParameterGroups:
+    - Label: 
+        default: Amazon VPC Parameters
+      Parameters: 
+        - EC2KeyName
+        - BastionInstanceType
+        - BastionSecurityGroup
+        - Subnets
+        - Ami
+        
+    ParameterLabels:
+      BastionSecurityGroup:
+        default: Bastion Security Group
+      BastionInstanceType: 
+        default: Instance Type
+      EC2KeyName:
+        default: Existing Key Pair
+      Ami:
+        default: Amazon Machine Image (Ami)
+      Subnets: 
+        default: Public Subnet
+  
+Parameters: 
+
+  Ami:
+    Type: String
+    AllowedValues:
+    - ami-14c5486b
+    ConstraintDescription: Must be a valid Amazon Image
+    Default: ami-14c5486b
+    Description: Amazon Machine Image to use for bastion host
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Select the bastion security group
+  BastionInstanceType:
+    Type: String
+    AllowedValues:
+    - t2.nano
+    - t2.micro
+    - t2.small
+    ConstraintDescription: Must be a valid Amazon EC2 instance type
+    Default: t2.nano
+    Description: Bastion EC2 instance type
+  EC2KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair. You will use this to connect to your bastion host.
+  Subnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Select existing public subnet. 
+  
+Resources:
+
+  BastionAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties: 
+      Cooldown: 60
+      HealthCheckGracePeriod: 120
+      HealthCheckType: EC2
+      LaunchConfigurationName: !Ref BastionLaunchConfiguration
+      MaxSize: 1
+      MinSize: 1
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'Bastion / ', !Ref 'AWS::StackName' ] ]
+          PropagateAtLaunch: true
+      VPCZoneIdentifier: 
+        - !Select [ 0, !Ref Subnets ]
+  BastionLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties: 
+      IamInstanceProfile: !Ref BastionInstanceProfile
+      ImageId: !Ref Ami
+      InstanceMonitoring: true
+      InstanceType: !Ref BastionInstanceType
+      KeyName: !Ref EC2KeyName
+      SecurityGroups:
+        - !Ref BastionSecurityGroup
+  BastionInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: '/'
+      Roles:
+      - !Ref BastionInstanceRole
+  BastionInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement: 
+        - Effect: Allow
+          Principal: 
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole 
+      Path: '/'
+      Policies:
+      - PolicyName: logs
+        PolicyDocument: 
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            - logs:DescribeLogStreams
+            Resource:
+            - arn:aws:logs:*:*:*
+
+
