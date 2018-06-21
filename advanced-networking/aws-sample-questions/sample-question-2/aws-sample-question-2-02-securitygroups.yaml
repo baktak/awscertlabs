@@ -113,6 +113,25 @@ Resources:
           Value: !Join [ '', [ 'App Server Security Group / ', !Ref 'AWS::StackName' ] ]
       VpcId: !Ref Vpc
        
+  YumRepositorySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: 'Security group to support access to AWS yum repositories'
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          CidrIp: "52.92.16.0/20"
+          FromPort: 80
+          ToPort: 80
+          Description: "AWS S3 us-east-1"
+        - IpProtocol: tcp
+          CidrIp: "52.92.48.0/22"
+          FromPort: 80
+          ToPort: 80
+          Description: "AWS S3 us-west-1"
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'AWS Yum repository security group / ', !Ref 'AWS::StackName' ] ]
+      VpcId: !Ref Vpc
 
 Outputs:
     
