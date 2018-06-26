@@ -10,7 +10,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Metadata: 
   AWS::CloudFormation::Interface:
     ParameterGroups:
-    - Label 
+    - Label:
         default: Network
       Parameters:
         - VpcCidr
